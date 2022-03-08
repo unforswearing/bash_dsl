@@ -1,87 +1,65 @@
-# Bash Extension
+# Bash DSL
 
-An attempt to limit bash to my specific use cases: text parsing and light automation.
+**This script targets bash 5.1+ on MacOS**
 
-:'
-<name TBD>: a (text focused) DSL for Bash 5.1+
-designed for script writing, but can be sourced interactively
+Bash DSL is a set of commands to provide abstraction for the parts of bash I never remember, specifically focused on non-interactive text processing and light scripting. Additionally, this script restricts bash and disables some builtin commands by default: `let` is used for setting variables, the `function` keyword has been aliased to `namespace`, possibly others. All of this is very experimental and very specific to my setup so *caveat emptor* and godspeed. Use this at your own risk.
 
-full syntax TBD, but mostly just standard / simplified 
-versions of regularly used commands
+## An abridged list of options
 
-scripts written with this dsl should be able to exec
-using only bash, without an compliation / interpret step
-scripts using this dsl can mix bash and dsl in the same file
-any command line tool (in $PATH) can be used directly in the file
-'
+An individual function for each relevant `set` option
 
-:'
-use alternative bash syntax for things:
+```
+init::verbose() { set -x; }
+init::strict() { set -euo pipefail; }
+init::posix() { set -o posix; }
+init::pipefail() { set -o pipefail; }
+init::onecmd() { set -o oneccmd; }
+init::noclobber() { set -o noclobber; }
+...
+...
+```
 
-- multiline comments use the :'comment' construction
+`init` commands have associated `exit` commands
 
-- create simple function using the func keyword
-  - these are loaded into the environment automatically
+```
+exit::verbose() { set +x; }
+exit::strict() { set +euo pipefail; }
+exit::posix() { set +o posix; }
+exit::pipefail() { set +o pipefail; }
+exit::onecmd() { set +o oneccmd; }
+exit::noclobber() { set +o noclobber; }
+...
+...
+```
 
-func "name" args...
+`assert` is a replacement for `if`
 
-- single line functions can be used without 
-  the function keyword or brackets:
+```
+assert [empty_or_null
+        bool
+        true
+        false
+        function
+        ...]
+```
 
-newfunc() echo "this is a different new func";
+`assert` also handles numerical comparisons
 
-- bash has ternary statements
+```
+assert <num> eq | ne | gt | ... <num>
+```
 
-`((var=var2*arr[2]))`
+There are individual functions for external tools, including `pandoc` (`tool.pandoc`), `media-info` (`tool.mediainfo`), and `ffmpeg` (`tool.ffmpeg`).
 
-- bash has string lists (nums work too)
-  - these cant be iterated by default
+Readonly variables use the `const` keyword.
 
-echo {apples,oranges,pears,grapes}
+The `filter` command can match on pcre(?) or posix regex.
 
-- scripts using various "set" commands can use the init:: and exit:: functions
+`func` provides an option to copy (memoize) functions.
 
+A new `list` datastructure is available, based on (and using) python lists
 
-https://ss64.com/osx/eval.html
-eval "grep" "-a" "$string"
-https://ss64.com/osx/exec.html
-exec "grep -a $string"
+Typical string methods are available `str split`, `str trim`, `str length`, etc.
 
-set +m
-set -o pipefail # return code from item that fails in pipe
-set -o nounset # do not allow unset variables
-set -o privileged # use a restricted shell
+Other string methods include `str to_int`, `str append`, `str to_char_list`.
 
-(return 0 2>/dev/null) && sourced=1 || sourced=0
-
-Other things that will help for more general programming:
-
-Statistics
-
-- [st](https://github.com/nferraz/st)
-- brew install st
-
-Unicode Character Info
-
-- [chars](https://github.com/antifuchs/chars/)
-- brew install chars
-
-Generate Regular Expressions
-
-- [grex](https://github.com/pemistahl/grex)
-- brew install grex
-
-Shell Helpers
-
-- [shtool](https://www.gnu.org/software/shtool/)
-- brew install shtool
-
-Field Extraction
-
-- [pk](https://github.com/johnmorrow/pk)
-- brew install pk
-  
-HTTP Requests
-
-- [burl](https://github.com/tj/burl)
-- brew install burl
